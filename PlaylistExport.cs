@@ -71,11 +71,48 @@ namespace cAlarm
             {
                 try
                 {
-                    string sfilename = Path.GetFileName(s);
-                    File.Copy(s, path + "\\" + sfilename);
-                    fileWorked++;
-                    float percent = (float)(fileWorked*100) / playlist.Count;
-                    backgroundWorker1.ReportProgress(Convert.ToInt32(percent));
+                    // Some playlist entries dont use full paths
+                    // if the file is on the Desktop it will use that as the root folder, 
+                    // causing an invalid path exception. And so we need to check for this
+                    if (s.Contains(":\\")) // Path starts with a driveletter, assume valid path
+                    {
+                        if(File.Exists(s))
+                        {
+                        string sfilename = Path.GetFileName(s);
+                        File.Copy(s, path + "\\" + sfilename);
+                        fileWorked++;
+                        float percent = (float)(fileWorked * 100) / playlist.Count;
+                        backgroundWorker1.ReportProgress(Convert.ToInt32(percent));
+                        }
+                        else
+                        {
+                            // File not found exception
+                            fileWorked++;
+                            float percent = (float)(fileWorked * 100) / playlist.Count;
+                            backgroundWorker1.ReportProgress(Convert.ToInt32(percent));
+                            exceptions++;
+                        }
+                    }
+                    else // Incomplete path detected, check user Desktop
+                    {
+                        string dPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + s;
+                        if (File.Exists(dPath))
+                        {
+                            string sfilename = Path.GetFileName(s);
+                            File.Copy(dPath, path + "\\" + sfilename);
+                            fileWorked++;
+                            float percent = (float)(fileWorked * 100) / playlist.Count;
+                            backgroundWorker1.ReportProgress(Convert.ToInt32(percent));
+                        }
+                        else
+                        {
+                            // File not found exception
+                            fileWorked++;
+                            float percent = (float)(fileWorked * 100) / playlist.Count;
+                            backgroundWorker1.ReportProgress(Convert.ToInt32(percent));
+                            exceptions++;
+                        }
+                    }
                 }
                 catch (Exception)
                 {
